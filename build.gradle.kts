@@ -1,16 +1,13 @@
 plugins {
     id("java")
     id("application")
-    id("com.gradleup.shadow").version("9.4.1")
 }
 
 group = "com.frankhof"
 version = "2026.1.0"
 
 application {
-    mainClass = "UkshStundenzettel"
-
-    applicationDistribution.from("xlsx").into("xlsx")
+    mainClass = "com.frankhof.uksh-stundenzettel.UkshStundenzettel"
 }
 
 repositories {
