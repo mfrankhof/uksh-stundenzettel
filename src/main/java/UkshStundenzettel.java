@@ -17,6 +17,7 @@ import org.apache.poi.xssf.usermodel.XSSFTable;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.io.File;
@@ -37,7 +38,7 @@ import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
-@Command(name = "uksh-stundenzettel", mixinStandardHelpOptions = true, version = "uksh-stundenzettel 0.1.0", description = "Generiert einen Stundenzettel für studentische Hilfskräfte des UKSH auf Basis einer Excel-Datei")
+@Command(name = "uksh-stundenzettel", mixinStandardHelpOptions = true, version = "uksh-stundenzettel 0.1.0", description = "Füllt den Stundenzettel für studentische Hilfskräfte des UKSH auf Basis einer Excel-Datei aus")
 class UkshStundenzettel implements Callable<Integer> {
     private static final Logger LOG = LogManager.getLogger(UkshStundenzettel.class);
 
@@ -65,7 +66,7 @@ class UkshStundenzettel implements Callable<Integer> {
     @Parameters(paramLabel = "JAHR_MONAT", description = "Monat im Format JJJJ-MM")
     YearMonth yearMonth;
 
-    @Parameters(paramLabel = "PDF", description = "Name / Pfad der PDF Datei")
+    @Option(names = {"-o", "--output"}, paramLabel = "PDF", description = "Name / Pfad der zu erzeugenden PDF-Datei")
     File outputFile;
 
     record TimeEntry(LocalDate date, LocalTime start, LocalTime end, Duration breakDuration, Duration total,
@@ -93,7 +94,8 @@ class UkshStundenzettel implements Callable<Integer> {
         }
         Duration totalSum = days.stream().map(TimeEntry::total).reduce(Duration.ZERO, Duration::plus);
         LOG.info("Summe: {} h", formatDecimalHours(totalSum));
-        writePdf(outputFile, yearMonth, employee, days);
+        File output = outputFile != null ? outputFile : new File("stundenzettel_" + yearMonth + ".pdf");
+        writePdf(output, yearMonth, employee, days);
         return 0;
     }
 
