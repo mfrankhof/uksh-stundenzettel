@@ -7,7 +7,7 @@ group = "com.frankhof"
 version = "2026.1.0"
 
 application {
-    mainClass = "com.frankhof.uksh-stundenzettel.UkshStundenzettel"
+    mainClass = "UkshStundenzettel"
 }
 
 repositories {
@@ -33,7 +33,8 @@ tasks.test {
 }
 
 tasks.processResources {
+    val projectVersion = project.version
     filesMatching("version.properties") {
-        expand("version" to project.version)
+        expand("version" to projectVersion)
     }
 }
