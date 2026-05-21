@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.frankhof"
-version = "2026.1.0"
+version = "2026.1.1"
 
 application {
     mainClass = "UkshStundenzettel"
