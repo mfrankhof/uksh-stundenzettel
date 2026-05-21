@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.frankhof"
-version = "0.1.0"
+version = "2026.1.0"
 
 application {
     mainClass = "UkshStundenzettel"
@@ -33,4 +33,10 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.processResources {
+    filesMatching("version.properties") {
+        expand("version" to project.version)
+    }
 }

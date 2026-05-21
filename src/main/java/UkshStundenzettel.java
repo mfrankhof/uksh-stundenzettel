@@ -17,6 +17,7 @@ import org.apache.poi.xssf.usermodel.XSSFTable;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.IVersionProvider;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
@@ -34,11 +35,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
-@Command(name = "uksh-stundenzettel", mixinStandardHelpOptions = true, version = "uksh-stundenzettel 0.1.0", description = "Füllt den Stundenzettel für studentische Hilfskräfte des UKSH auf Basis einer Excel-Datei aus")
+@Command(name = "uksh-stundenzettel", mixinStandardHelpOptions = true, versionProvider = UkshStundenzettel.VersionProvider.class, description = "Füllt den Stundenzettel für studentische Hilfskräfte des UKSH auf Basis einer Excel-Datei aus")
 class UkshStundenzettel implements Callable<Integer> {
     private static final Logger LOG = LogManager.getLogger(UkshStundenzettel.class);
 
@@ -255,5 +257,17 @@ class UkshStundenzettel implements Callable<Integer> {
     static void main(String... args) {
         int exitCode = new CommandLine(new UkshStundenzettel()).execute(args);
         System.exit(exitCode);
+    }
+
+    static class VersionProvider implements IVersionProvider {
+        @Override
+        public String[] getVersion() throws Exception {
+            Properties props = new Properties();
+            try (InputStream is = UkshStundenzettel.class.getResourceAsStream("/version.properties")) {
+                if (is == null) throw new IOException("version.properties nicht im Klassenpfad gefunden");
+                props.load(is);
+            }
+            return new String[]{"uksh-stundenzettel " + props.getProperty("version")};
+        }
     }
 }
