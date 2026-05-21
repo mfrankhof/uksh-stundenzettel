@@ -254,7 +254,7 @@ class UkshStundenzettel implements Callable<Integer> {
         cs.endText();
     }
 
-    public static void main(String... args) {
+    void main(String... args) {
         int exitCode = new CommandLine(new UkshStundenzettel()).execute(args);
         System.exit(exitCode);
     }
