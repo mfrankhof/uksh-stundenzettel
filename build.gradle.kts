@@ -1,13 +1,14 @@
 plugins {
-    id("java")
     id("application")
+    id("org.openjfx.javafxplugin").version("0.1.0")
 }
 
 group = "com.frankhof"
 version = "2026.1.1"
 
 application {
-    mainClass = "UkshStundenzettel"
+    mainClass = "MainApp"
+    applicationDefaultJvmArgs = listOf("--enable-native-access=javafx.graphics")
 }
 
 repositories {
@@ -20,12 +21,15 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-api")
     implementation("org.apache.logging.log4j:log4j-core")
     implementation("org.apache.pdfbox:pdfbox:3.0.7")
-    implementation("info.picocli:picocli:4.7.7")
-    annotationProcessor("info.picocli:picocli-codegen:4.7.7")
 
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+javafx {
+    version = "26.0.1"
+    modules = listOf("javafx.controls", "javafx.fxml")
 }
 
 tasks.test {
