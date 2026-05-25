@@ -21,11 +21,14 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -35,11 +38,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 public class MainApp extends Application {
     private static final Logger LOG = LogManager.getLogger(MainApp.class);
+    private static final String APP_NAME = "UKSH Stundenzettel Generator";
+    private static final String APP_VERSION = loadAppVersion();
 
     @Override
     public void start(Stage stage) {
@@ -152,11 +158,12 @@ public class MainApp extends Application {
                         + " -fx-padding: 4;"
                         + " -fx-cursor: hand;";
 
-        Button infoButton = new Button();
-        infoButton.setGraphic(SvgIconLoader.load("/icons/info.svg"));
-        infoButton.setStyle(iconButtonStyle);
-        infoButton.setFocusTraversable(false);
-        infoButton.setTooltip(new Tooltip("Informationen über dieses Programm anzeigen"));
+        Button aboutButton = new Button();
+        aboutButton.setGraphic(SvgIconLoader.load("/icons/info.svg"));
+        aboutButton.setStyle(iconButtonStyle);
+        aboutButton.setFocusTraversable(false);
+        aboutButton.setTooltip(new Tooltip("Informationen über dieses Programm anzeigen"));
+        aboutButton.setOnAction(_ -> showAboutWindow(stage));
 
         Button logButton = new Button();
         logButton.setGraphic(SvgIconLoader.load("/icons/scroll-text.svg"));
@@ -167,7 +174,7 @@ public class MainApp extends Application {
         Region actionSpacer = new Region();
         HBox.setHgrow(actionSpacer, Priority.ALWAYS);
 
-        HBox actionBox = new HBox(8, infoButton, logButton, actionSpacer, progressIndicator, genPdfButton);
+        HBox actionBox = new HBox(8, aboutButton, logButton, actionSpacer, progressIndicator, genPdfButton);
         actionBox.setAlignment(Pos.CENTER);
 
         Region spacer = new Region();
@@ -179,9 +186,38 @@ public class MainApp extends Application {
         root.setAlignment(Pos.TOP_RIGHT);
 
         Scene scene = new Scene(root, 500, 300);
-        stage.setTitle("UKSH Stundenzettel Generator");
+        stage.setTitle(APP_NAME);
         stage.setScene(scene);
         stage.show();
+    }
+
+    private static void showAboutWindow(Stage owner) {
+        Label nameLabel = new Label(APP_NAME);
+        nameLabel.setStyle("-fx-font-size: 16; -fx-font-weight: bold;");
+
+        Label versionLabel = new Label("Version " + APP_VERSION);
+
+        VBox content = new VBox(8, nameLabel, versionLabel);
+        content.setAlignment(Pos.CENTER);
+        content.setPadding(new Insets(24));
+
+        Stage aboutStage = new Stage();
+        aboutStage.initOwner(owner);
+        aboutStage.initModality(Modality.WINDOW_MODAL);
+        aboutStage.setTitle("Über");
+        aboutStage.setResizable(false);
+        aboutStage.setScene(new Scene(content));
+        aboutStage.showAndWait();
+    }
+
+    private static String loadAppVersion() {
+        Properties props = new Properties();
+        try (InputStream in = MainApp.class.getResourceAsStream("/version.properties")) {
+            if (in != null) props.load(in);
+        } catch (IOException e) {
+            LOG.warn("version.properties konnte nicht gelesen werden", e);
+        }
+        return props.getProperty("version", "unbekannt");
     }
 
     private static void generatePdf(File xlsxFile, YearMonth yearMonth, File outputFile) throws Exception {
