@@ -20,6 +20,8 @@ dependencies {
     implementation(platform("org.apache.logging.log4j:log4j-bom:2.26.0"))
     implementation("org.apache.logging.log4j:log4j-api")
     implementation("org.apache.logging.log4j:log4j-core")
+    annotationProcessor(platform("org.apache.logging.log4j:log4j-bom:2.26.0"))
+    annotationProcessor("org.apache.logging.log4j:log4j-core")
     implementation("org.apache.pdfbox:pdfbox:3.0.7")
 
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
@@ -34,6 +36,13 @@ javafx {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.addAll(listOf(
+        "-Alog4j.graalvm.groupId=${project.group}",
+        "-Alog4j.graalvm.artifactId=${project.name}"
+    ))
 }
 
 tasks.processResources {

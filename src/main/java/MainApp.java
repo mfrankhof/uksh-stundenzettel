@@ -1,6 +1,8 @@
 import javafx.application.Application;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -9,6 +11,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory;
@@ -170,6 +173,7 @@ public class MainApp extends Application {
         logButton.setStyle(iconButtonStyle);
         logButton.setFocusTraversable(false);
         logButton.setTooltip(new Tooltip("Log anzeigen"));
+        logButton.setOnAction(_ -> showLogWindow(stage));
 
         Region actionSpacer = new Region();
         HBox.setHgrow(actionSpacer, Priority.ALWAYS);
@@ -189,6 +193,31 @@ public class MainApp extends Application {
         stage.setTitle(APP_NAME);
         stage.setScene(scene);
         stage.show();
+
+        LOG.info("{} {} gestartet", APP_NAME, APP_VERSION);
+    }
+
+    private static void showLogWindow(Stage owner) {
+        ObservableList<String> entries = FxLogAppender.entries();
+        ListView<String> listView = new ListView<>(entries);
+        listView.setStyle("-fx-font-family: monospaced;");
+
+        ListChangeListener<String> listener = c -> {
+            while (c.next()) {
+                if (c.wasAdded()) {
+                    listView.scrollTo(entries.size() - 1);
+                }
+            }
+        };
+        entries.addListener(listener);
+
+        Stage logStage = new Stage();
+        logStage.initOwner(owner);
+        logStage.setTitle("Log");
+        logStage.setScene(new Scene(listView, 700, 400));
+        logStage.setOnHidden(_ -> entries.removeListener(listener));
+        logStage.show();
+        if (!entries.isEmpty()) listView.scrollTo(entries.size() - 1);
     }
 
     private static void showAboutWindow(Stage owner) {
@@ -256,6 +285,7 @@ public class MainApp extends Application {
         return days;
     }
 
+    @SuppressWarnings("unused")
     void main(String[] args) {
         launch(args);
     }
