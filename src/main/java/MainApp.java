@@ -13,7 +13,7 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextField;
-import javafx.scene.input.Dragboard;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -45,12 +45,13 @@ public class MainApp extends Application {
     public void start(Stage stage) {
         TextField xlsxFilePathField = new TextField();
         xlsxFilePathField.setEditable(false);
+        xlsxFilePathField.setFocusTraversable(false);
         xlsxFilePathField.setStyle("-fx-background-radius: 3 0 0 3;");
         HBox.setHgrow(xlsxFilePathField, Priority.ALWAYS);
 
         Button chooseXlsxFileButton = new Button("Datei auswählen");
         chooseXlsxFileButton.setStyle("-fx-background-radius: 0 3 3 0;");
-        chooseXlsxFileButton.setOnAction(event -> {
+        chooseXlsxFileButton.setOnAction(_ -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel-Dateien", "*.xlsx"));
             File xlsxFile = fileChooser.showOpenDialog(stage);
@@ -117,7 +118,7 @@ public class MainApp extends Application {
                         .or(yearSpinner.valueProperty().isNull())
                         .or(taskRunning)
         );
-        genPdfButton.setOnAction(event -> {
+        genPdfButton.setOnAction(_ -> {
             YearMonth yearMonth = YearMonth.of(yearSpinner.getValue(), monthComboBox.getSelectionModel().getSelectedIndex() + 1);
 
             FileChooser saveDialog = new FileChooser();
@@ -134,8 +135,8 @@ public class MainApp extends Application {
                     return null;
                 }
             };
-            task.setOnSucceeded(e -> taskRunning.set(false));
-            task.setOnFailed(e -> {
+            task.setOnSucceeded(_ -> taskRunning.set(false));
+            task.setOnFailed(_ -> {
                 taskRunning.set(false);
                 Throwable ex = task.getException();
                 new Alert(Alert.AlertType.ERROR, "Fehler bei der PDF-Erzeugung: " + ex.getMessage()).showAndWait();
@@ -146,8 +147,28 @@ public class MainApp extends Application {
             thread.start();
         });
 
-        HBox actionBox = new HBox(8, progressIndicator, genPdfButton);
-        actionBox.setAlignment(Pos.CENTER_RIGHT);
+        String iconButtonStyle =
+                "-fx-background-color: transparent;"
+                        + " -fx-padding: 4;"
+                        + " -fx-cursor: hand;";
+
+        Button infoButton = new Button();
+        infoButton.setGraphic(SvgIconLoader.load("/icons/info.svg"));
+        infoButton.setStyle(iconButtonStyle);
+        infoButton.setFocusTraversable(false);
+        infoButton.setTooltip(new Tooltip("Informationen über dieses Programm anzeigen"));
+
+        Button logButton = new Button();
+        logButton.setGraphic(SvgIconLoader.load("/icons/scroll-text.svg"));
+        logButton.setStyle(iconButtonStyle);
+        logButton.setFocusTraversable(false);
+        logButton.setTooltip(new Tooltip("Log anzeigen"));
+
+        Region actionSpacer = new Region();
+        HBox.setHgrow(actionSpacer, Priority.ALWAYS);
+
+        HBox actionBox = new HBox(8, infoButton, logButton, actionSpacer, progressIndicator, genPdfButton);
+        actionBox.setAlignment(Pos.CENTER);
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -157,7 +178,7 @@ public class MainApp extends Application {
         root.setPadding(new Insets(16));
         root.setAlignment(Pos.TOP_RIGHT);
 
-        Scene scene = new Scene(root, 600, 400);
+        Scene scene = new Scene(root, 500, 300);
         stage.setTitle("UKSH Stundenzettel Generator");
         stage.setScene(scene);
         stage.show();
