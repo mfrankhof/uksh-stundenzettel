@@ -65,6 +65,7 @@ public class MainApp extends Application {
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel-Dateien", "*.xlsx"));
             File xlsxFile = fileChooser.showOpenDialog(stage);
             if (xlsxFile != null) {
+                LOG.debug("Excel-Datei ausgewählt: {}", xlsxFile);
                 xlsxFilePathField.setText(xlsxFile.getAbsolutePath());
             }
         });
@@ -148,6 +149,7 @@ public class MainApp extends Application {
             task.setOnFailed(_ -> {
                 taskRunning.set(false);
                 Throwable ex = task.getException();
+                LOG.error("PDF-Erzeugung fehlgeschlagen", ex);
                 new Alert(Alert.AlertType.ERROR, "Fehler bei der PDF-Erzeugung: " + ex.getMessage()).showAndWait();
             });
             taskRunning.set(true);
@@ -250,16 +252,17 @@ public class MainApp extends Application {
     }
 
     private static void generatePdf(File xlsxFile, YearMonth yearMonth, File outputFile) throws Exception {
+        LOG.info("PDF-Erzeugung gestartet: Quelle={}, Monat={}, Ziel={}", xlsxFile, yearMonth, outputFile);
         Employee employee;
         List<TimeEntry> segments;
         try (ExcelReader reader = new ExcelReader(xlsxFile)) {
             employee = reader.readEmployeeDetails();
+            LOG.info("Mitarbeiter: {} {} ({}), Abteilung: {}",
+                    employee.firstName(), employee.lastName(), employee.employeeId(), employee.department());
             segments = reader.readEntries(yearMonth);
         }
         List<TimeEntry> days = mergeByDay(segments);
-        LOG.debug("{} Tageseinträge aus {} Einzeleinträgen für {}", days.size(), segments.size(), yearMonth);
-        Duration totalSum = days.stream().map(TimeEntry::total).reduce(Duration.ZERO, Duration::plus);
-        LOG.debug("Summe: {} h", PdfGenerator.formatDecimalHours(totalSum));
+        LOG.info("{} Tageseinträge aus {} Einzeleinträgen für {}", days.size(), segments.size(), yearMonth);
         PdfGenerator.writePdf(outputFile, yearMonth, employee, days);
         LOG.info("PDF erzeugt: {}", outputFile);
     }
@@ -274,7 +277,12 @@ public class MainApp extends Application {
             Duration worked = group.stream().map(TimeEntry::total).reduce(Duration.ZERO, Duration::plus);
             Duration breakDur = Duration.between(dayStart, dayEnd).minus(worked);
             if (breakDur.isNegative()) {
-                throw new IllegalStateException("Überlappende Einträge am " + group.getFirst().date());
+                LocalDate date = group.getFirst().date();
+                String overlapping = group.stream()
+                        .map(e -> e.start() + "–" + e.end())
+                        .collect(Collectors.joining(", "));
+                LOG.error("Überlappende Einträge am {}: {}", date, overlapping);
+                throw new IllegalStateException("Überlappende Einträge am " + date);
             }
             String remark = group.stream()
                     .map(TimeEntry::remark)
