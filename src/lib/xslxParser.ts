@@ -163,7 +163,7 @@ function locateColumns(sheet: WorkSheet, range: Range): Effect.Effect<{ headerRo
         for (let col = range.s.c; col <= range.e.c; col++) {
             const cell = sheet[utils.encode_cell({ r: row, c: col })];
             const value = cell?.v;
-            const key = required.find(([, name]) => name === value)?.[0];
+            const key = required.find(([, name]) => name === String(value).trim())?.[0];
             if (key) found[key] = col;
         }
         if (required.every(([key]) => found[key] !== undefined)) {
