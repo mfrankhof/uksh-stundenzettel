@@ -1,9 +1,10 @@
-import { PDFDocument, StandardFonts, type PDFPage, type PDFFont } from "pdf-lib";
+import { PDFDocument, type PDFPage, type PDFFont } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
 import { Duration, DateTimeFormatter } from "@js-joda/core";
 import { Effect } from "effect";
 import type { Timesheet } from "./xslxParser";
-
 const TEMPLATE_URL = "/stundenzettel-vorlage.pdf";
+const FONT_URL = "/fonts/JetBrainsMono-Regular.ttf";
 
 const LAYOUT = {
     fontSize: 10,
@@ -14,13 +15,13 @@ const LAYOUT = {
         department: { x: 310, y: 686 },
     },
     table: {
-        firstRowY: 584.5,
+        firstRowY: 584.25,
         rowHeight: 14.52,
         columns: {
             start: 76,
             finish: 177,
-            break: 264,
-            workedHours: 338,
+            break: 263,
+            workedHours: 337,
             remark: 394,
         },
     },
@@ -36,24 +37,32 @@ const GERMAN_MONTHS = [
 
 export function generatePdf(timesheet: Timesheet, year: number, month: number): Effect.Effect<Uint8Array, Error> {
     return Effect.gen(function* () {
-        const templateBytes = yield* Effect.tryPromise({
-            try: () => fetch(TEMPLATE_URL).then((response) => {
-                if (!response.ok) throw new Error(`Status ${response.status}`);
-                return response.arrayBuffer();
-            }),
-            catch: (e) => new Error(`PDF-Vorlage "${TEMPLATE_URL}" konnte nicht geladen werden: ${e}`),
-        });
+        const [templateBytes, fontBytes] = yield* Effect.all([
+            fetchArrayBuffer(TEMPLATE_URL, `PDF-Vorlage "${TEMPLATE_URL}" konnte nicht geladen werden`),
+            fetchArrayBuffer(FONT_URL, `Schriftart "JetBrains Mono" konnte nicht geladen werden`),
+        ], { concurrency: "unbounded" });
 
         return yield* Effect.tryPromise({
-            try: () => stampTimesheet(templateBytes, timesheet, year, month),
+            try: () => stampTimesheet(templateBytes, fontBytes, timesheet, year, month),
             catch: (e) => new Error(`PDF konnte nicht erzeugt werden: ${e}`),
         });
     });
 }
 
-async function stampTimesheet(templateBytes: ArrayBuffer, timesheet: Timesheet, year: number, month: number): Promise<Uint8Array> {
+function fetchArrayBuffer(url: string, errorMessage: string): Effect.Effect<ArrayBuffer, Error> {
+    return Effect.tryPromise({
+        try: () => fetch(url).then((response) => {
+            if (!response.ok) throw new Error(`Status ${response.status}`);
+            return response.arrayBuffer();
+        }),
+        catch: (e) => new Error(`${errorMessage}: ${e}`),
+    });
+}
+
+async function stampTimesheet(templateBytes: ArrayBuffer, fontBytes: ArrayBuffer, timesheet: Timesheet, year: number, month: number): Promise<Uint8Array> {
     const pdf = await PDFDocument.load(templateBytes);
-    const font = await pdf.embedFont(StandardFonts.Helvetica);
+    pdf.registerFontkit(fontkit);
+    const font = await pdf.embedFont(fontBytes, { subset: true });
     const page = pdf.getPages()[0];
 
     const draw = drawTextAt(page, font);
