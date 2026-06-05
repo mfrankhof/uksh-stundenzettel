@@ -37,15 +37,17 @@
     "November",
     "Dezember",
   ];
-  // bits-ui Select works with string values, so the month is held as a 1-based string.
+
   const months = MONTH_NAMES.map((label, index) => ({
     value: String(index + 1),
     label,
   }));
 
   const now = new Date();
-  let year = $state(now.getFullYear());
-  let month = $state(String(now.getMonth() + 1));
+  const defaultDate =
+    now.getDate() <= 15 ? new Date(now.getFullYear(), now.getMonth() - 1) : now;
+  let year = $state(defaultDate.getFullYear());
+  let month = $state(String(defaultDate.getMonth() + 1));
   let fileInput: HTMLInputElement;
   let xslxFile = $state<File | null>(null);
   let pdfBytes = $state<Uint8Array | null>(null);
@@ -62,13 +64,11 @@
   const pdfFilename = $derived(
     `Stundenzettel_${year}-${month.padStart(2, "0")}.pdf`,
   );
-  // The number input binds to null when cleared, so guard against that too.
+
   const canGenerate = $derived(
     xslxFile !== null && Number.isFinite(year) && month !== "",
   );
 
-  // A generated PDF (and any error) is tied to the chosen period, so discard them
-  // when either changes.
   $effect(() => {
     year;
     month;
@@ -135,8 +135,6 @@
     isGenerating = true;
     error = null;
     try {
-      // `Effect.either` surfaces the typed failure as a value instead of a
-      // rejected promise, so the parser's German messages reach the UI.
       const parsed = await Effect.runPromise(
         Effect.either(parseXlsx(xslxFile, year, Number(month))),
       );
@@ -144,7 +142,7 @@
         error = parsed.left.message;
         return;
       }
-      // An empty period would yield a blank timesheet, so confirm before generating.
+
       if (parsed.right.entries.length === 0) {
         pendingTimesheet = parsed.right;
         confirmEmptyOpen = true;
