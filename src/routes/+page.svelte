@@ -5,6 +5,7 @@
   import * as Item from "$lib/components/ui/item/index";
   import { parseXlsx, type Timesheet } from "$lib/xslxParser";
   import { generatePdf } from "$lib/pdfGenerator";
+  import { GERMAN_MONTHS } from "$lib/months";
   import { Effect, Either } from "effect";
   import DownloadIcon from "@lucide/svelte/icons/download";
   import FileTextIcon from "@lucide/svelte/icons/file-text";
@@ -23,22 +24,7 @@
   const XLSX_MIME =
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-  const MONTH_NAMES = [
-    "Januar",
-    "Februar",
-    "März",
-    "April",
-    "Mai",
-    "Juni",
-    "Juli",
-    "August",
-    "September",
-    "Oktober",
-    "November",
-    "Dezember",
-  ];
-
-  const months = MONTH_NAMES.map((label, index) => ({
+  const months = GERMAN_MONTHS.map((label, index) => ({
     value: String(index + 1),
     label,
   }));

@@ -3,6 +3,7 @@ import fontkit from "@pdf-lib/fontkit";
 import { Duration, DateTimeFormatter } from "@js-joda/core";
 import { Effect } from "effect";
 import type { Timesheet } from "./xslxParser";
+import { GERMAN_MONTHS } from "./months";
 const TEMPLATE_URL = "/stundenzettel-vorlage.pdf";
 const FONT_URL = "/fonts/JetBrainsMono-Regular.ttf";
 
@@ -30,10 +31,6 @@ const LAYOUT = {
 
 const TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
 
-const GERMAN_MONTHS = [
-    "Januar", "Februar", "März", "April", "Mai", "Juni",
-    "Juli", "August", "September", "Oktober", "November", "Dezember",
-] as const;
 
 export function generatePdf(timesheet: Timesheet, year: number, month: number): Effect.Effect<Uint8Array, Error> {
     return Effect.gen(function* () {
