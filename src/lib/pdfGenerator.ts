@@ -23,7 +23,7 @@ const LAYOUT = {
             finish: 177,
             break: 263,
             workedHours: 337,
-            remark: 394,
+            remark: 393,
         },
     },
     totalWorkedHours: { x: 337, y: 134 },
@@ -79,7 +79,8 @@ async function stampTimesheet(templateBytes: ArrayBuffer, fontBytes: ArrayBuffer
         draw(entry.finish.format(TIME_FORMAT), columns.finish, y);
         draw(formatDecimalHours(entry.break), columns.break, y);
         draw(formatDecimalHours(entry.workedHours), columns.workedHours, y);
-        draw(entry.remark, columns.remark, y);
+        const remark = entry.remark.length > 18 ? entry.remark.slice(0, 18) + "..." : entry.remark;
+        draw(remark, columns.remark, y);
         totalWorked = totalWorked.plus(entry.workedHours);
     }
 
