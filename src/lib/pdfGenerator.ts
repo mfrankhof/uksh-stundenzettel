@@ -41,7 +41,7 @@ export function generatePdf(timesheet: Timesheet, year: number, month: number): 
 
         return yield* Effect.tryPromise({
             try: () => stampTimesheet(templateBytes, fontBytes, timesheet, year, month),
-            catch: (e) => new Error(`PDF konnte nicht erzeugt werden: ${e}`),
+            catch: (e: Error) => new Error(`PDF konnte nicht erzeugt werden: ${e}`),
         });
     });
 }
@@ -52,7 +52,7 @@ function fetchArrayBuffer(url: string, errorMessage: string): Effect.Effect<Arra
             if (!response.ok) throw new Error(`Status ${response.status}`);
             return response.arrayBuffer();
         }),
-        catch: (e) => new Error(`${errorMessage}: ${e}`),
+        catch: (e: Error) => new Error(`${errorMessage}: ${e}`),
     });
 }
 
